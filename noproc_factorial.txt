@@ -1,0 +1,18 @@
+out("Enter_number_to_fucktorial");
+double a;
+in(a);
+a=Factorial(a);
+out("Result_");
+out(a);
+end;
+
+
+Factorial(a)//Factorial//
+if (a<1) {
+	return 1;
+}
+else {
+	return (Factorial(a-1))*a;
+}
+
+
