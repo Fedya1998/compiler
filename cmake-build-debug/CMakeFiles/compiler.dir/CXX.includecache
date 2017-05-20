@@ -49,6 +49,8 @@ clocale
 -
 iostream
 -
+printFe.h
+-
 assert.h
 -
 my_debug.h
@@ -89,6 +91,8 @@ iostream
 -
 fstream
 -
+my_debug.h
+-
 
 /home/fedya/Рабочий стол/my_include/my_debug.h
 
@@ -97,8 +101,16 @@ ctype.h
 -
 assert.h
 -
+string.h
+-
 small_shit.h
 /home/fedya/Рабочий стол/my_include/small_shit.h
+
+/home/fedya/Рабочий стол/my_include/printFe.h
+iostream
+-
+stdio.h
+-
 
 /home/fedya/Рабочий стол/my_include/small_shit.h
 cstdlib

@@ -2,9 +2,7 @@ DEFAULT REL
 section .bss
 buf  resb    64      ; output buffer
 
-
 section .text
-
 
 %macro print_char 1      ; a macro with 1 par = str[i]
         mov     rax, 1   ; syscall  1 write
@@ -14,6 +12,9 @@ section .text
         syscall 
 %endmacro
 
+;global _start
+
+;_start:
 
 global printff:function
 
@@ -41,7 +42,7 @@ printff:
 	mov r9, 0
 	cmp byte [r13+r8], r9b
 	je .return
-	mov r9, [prc]
+	mov r9, '%'
 	cmp byte [r13+r8], r9b
 	je .percent
 	mov r9, [r13+r8]
@@ -60,7 +61,6 @@ printff:
 	pop r8
 	pop r9
 	push r11
-	;push r11
 	ret
 
 
@@ -68,7 +68,7 @@ printff:
 	inc r14
 	inc r8
 
-	mov r9, prc
+	mov r9, '%'
 	cmp byte [r13+r8], r9b
 	je .percent_percent
 	
@@ -98,7 +98,7 @@ printff:
 
 .percent_percent:
 	inc r8
-	mov rax, [prc]
+	mov rax, '%'
 	mov [buf+r12], rax
 	print_char [buf+r12]
 	inc r12
@@ -209,6 +209,3 @@ printff:
 
 
 section .data
-
-
-prc db '%'

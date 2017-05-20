@@ -6,11 +6,10 @@
 #include <my_functions.h>
 #include <clocale>
 #include <iostream>
+#include <printFe.h>
 
 
 #define NDEBUG
-#define CANARY 228
-#define VAR_IN_FUNCTION 10
 #include <assert.h>
 #include <my_debug.h>
 
@@ -76,7 +75,7 @@ CMD_EMPTY
 #undef DEF_CMD
 };
 
-
+const int CANARY = 228;
 
 
 struct tree_header{
@@ -188,8 +187,10 @@ int To_Asm_Number(elem * element);
 int To_Asm_Ret(elem * element);
 int To_Asm_Func(elem * element);
 int To_Asm_If(elem * element);
+int To_Asm_In(elem * element);
 int To_Asm_Els(elem * element);
-int To_Asm_Reg(elem * element);
+int To_Asm_New_Func(elem * element);
+int To_Asm_Ass(elem * element);
 void Super_Switch(elem * element);
 
 int current_message = 0;
@@ -200,9 +201,17 @@ int To_Intel_Asm(elem * element);
 int Destruction = 0;
 
 
-FILE * prog = fopen("proga.asm", "w");
+FILE * prog = NULL;
 
+enum super_mode{
+    ASM_MODE,
+    BIN_MODE
+};
 
+const int SUPER_TRANSLATE_MODE = ASM_MODE;//1 - .asm, 2 - bin file
+
+#define f_asm(code) if (SUPER_TRANSLATE_MODE == ASM_MODE) {code}
+#define f_bin(code) if (SUPER_TRANSLATE_MODE == BIN_MODE) {code}
 
 #define to_f(data) fprintf(prog, data)
 
@@ -210,7 +219,7 @@ List <char> super_list = List<char>();
 
 int main(){
 
-    char source_name[] = "noproc_factorial.txt";
+    char source_name[] = "test.txt";
 
     char * program = (char *)File_To_Buf_u(fopen(source_name, "r"));
 
@@ -242,21 +251,45 @@ int main(){
     source_name[1] = '_';
 
 
-    List <Label> label_list = List<Label>();
+    f_asm(prog = fopen("proga.asm", "w");)
+    else {
+        prog = fopen("a.out.lib", "ab");
+        fseek(prog, 900 , SEEK_SET);
+    }
+
+    List <Label> label_list = List <Label> ();
     label_list.Compare = Compare_Label;
-    to_f("%%include \"io.inc\"\n%%include \"printff.asm\"\nsection .text\n\tglobal  _start\n_start:\n");
-    To_Intel_Asm(header->first);
-    to_f("section .data\n");
-    super_list.dump();
-    super_list.file_dump(prog);
-    fputs("msgvardec db \"%d\", 0\n", prog);
-    fputs("msgstring db \"%s\", 0\n", prog);
+    f_asm(
+        to_f("DEFAULT REL\n"
+             "%%include \"printff.asm\"\n"
+             "%%include \"in.asm\"\n"
+             "section .text\n\t"
+             "global _start\n"
+             "_start:\n");
+        To_Intel_Asm(header->first);
+        to_f("section .data\n");
+        super_list.dump();
+        super_list.file_dump(prog);
+        fputs("msgvardec db \'%d\', 0\n", prog);
+        fputs("msgstring db \'%s\', 0\n", prog);
+    )
+    else {
+        
+        To_Intel_Asm(header->first);
+    }
 
     fclose(prog);
 
     Delete_Tree(header);
     List_Dtor(l_header);
-    system("make");
+    f_asm(
+        system("make");
+        system("./a.out");
+    )
+    else{
+        system("./a.out.lib");
+    }
+
 
 
 
@@ -269,6 +302,7 @@ int main(){
 #include "to_new_asm_functions.h"
 
 
-//#include "to_asm_functions.h"
 
-
+#undef f_asm
+#undef f_bin
+#undef to_f

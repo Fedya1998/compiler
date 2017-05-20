@@ -1,4 +1,4 @@
-printf("CUR FUNC ++\n\n\n\n");//It's a new function
+//printf("CUR FUNC ++\n\n\n\n");//It's a new function
 func_array[cur_func] = Tree_Ctor();
 Add_First(func_array[cur_func]);
 func_array[cur_func++]->first = element;

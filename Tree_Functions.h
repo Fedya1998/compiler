@@ -142,7 +142,7 @@ void Tree_Dump(const tree_header *header) {
     Elem_And_Next_Dump(header->first);
     fprintf(super_tree_dump, "}");
     fclose(super_tree_dump);
-    system("cd ~/code/ded/mne_jopa");
+    system("cd ~/code/ded/compiler");
     system("dot -Tpng dump.gv -o dump.png");
 }
 
@@ -685,15 +685,15 @@ elem *Che_Delat_Esli_out(elem * element){
     s = list_elem_now->value;
 
 
-    s = (char *) strchr((char *) s, '(');
+    s = strchr(s, '(');
     assert(s);
-    char * word_end = (char *) strchr((char *) s, ')');
-    char * kavich = (char *) strchr((char *) s, 34);
+    char * word_end = strchr(s, ')');
+    char * kavich = strchr(s, 34);
     *word_end = '\0';
 
     if (kavich && kavich < word_end){
         //printf("Out string\n");
-        word_end = (char *)strchr((char *)(kavich + 1), 34);
+        word_end = (char *)strchr((kavich + 1), 34);
         *word_end = '\0';
         assert(word_end);
         //printf("string %s\n", kavich);
@@ -709,14 +709,14 @@ elem *Che_Delat_Esli_out(elem * element){
         sprintf(string+3, "%i", current_message++);
         string[6] = '\0';
 
-        super_list.add_end(new List_Elem<char>(str));
+        super_list.append(str);
 
         element->right->value = string;
     } else {
         //printf("Out var\n");
 
         s = list_elem_now->value;
-        s = (char *) strchr((char *) s, '(') + 1;
+        s = strchr(s, '(') + 1;
         int my_var = Get_Var_Num();
         element->data_type = TYPE_OUT;
         Add_Right(element);

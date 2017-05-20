@@ -15,5 +15,6 @@ CMakeFiles/compiler.dir/main.cpp.o: ../types_with_code.h
 CMakeFiles/compiler.dir/main.cpp.o: /home/fedya/Рабочий\ стол/my_include/list.h
 CMakeFiles/compiler.dir/main.cpp.o: /home/fedya/Рабочий\ стол/my_include/my_debug.h
 CMakeFiles/compiler.dir/main.cpp.o: /home/fedya/Рабочий\ стол/my_include/my_functions.h
+CMakeFiles/compiler.dir/main.cpp.o: /home/fedya/Рабочий\ стол/my_include/printFe.h
 CMakeFiles/compiler.dir/main.cpp.o: /home/fedya/Рабочий\ стол/my_include/small_shit.h
 

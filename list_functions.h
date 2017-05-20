@@ -91,7 +91,7 @@ void List_Dump(list_header * header){
     }
     fprintf(super_list_dump, "}");
     fclose(super_list_dump);
-    system("cd ~/code/ded/mne_jopa");
+    system("cd ~/code/ded/compiler");
     system("dot -Tpng list_dump.gv -o list_dump.png");
 }
 

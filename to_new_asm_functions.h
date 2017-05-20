@@ -3,10 +3,10 @@
 //
 
 
-#ifndef MNE_JOPA_TO_ASM_FUNCTIONS_H
-#define MNE_JOPA_TO_ASM_FUNCTIONS_H
+#ifndef COMPILER_TO_ASM_FUNCTIONS_H
+#define COMPILER_TO_ASM_FUNCTIONS_H
 
-#endif //MNE_JOPA_TO_ASM_FUNCTIONS_H
+#endif //COMPILER_TO_ASM_FUNCTIONS_H
 
 
 int To_Intel_Asm(elem * element){
@@ -35,12 +35,12 @@ int To_Intel_Asm(elem * element){
 
 int To_Asm_Op(elem * element){
     assert(element);
-
+/*
     if (element->left->data_type == TYPE_OP || element->left->data_type == TYPE_FUNC)
         To_Intel_Asm(element->left);
     if (element->right->data_type == TYPE_OP|| element->right->data_type == TYPE_FUNC)
         To_Intel_Asm(element->right);
-
+*/
     /*if (* ((int *) &element->value) == CMD_POW) {
         if (element->left)
             To_Asm(element->left);
@@ -48,17 +48,26 @@ int To_Asm_Op(elem * element){
             To_Asm(element->right);
     }*/
 
+    To_Intel_Asm(element->left);
+    f_asm(to_f("\tpop rax\n");)
+    f_bin(fprintf(prog, "%x", 0x58);)
+
+    To_Intel_Asm(element->right);
+    f_asm(to_f("\tpop rdx\n");)
+    f_bin(fprintf(prog, "%x", 0x5a);)
+
+    int value = *((int*)(&(element->value)));
 
 
-    switch (*((int*)(&(element->value)))){
+    switch (value){
 #define DEF_CMD(name, num)                       \
         case num: {                               \
             p(14, ("Eeee podoshlo %s\n", #name));  \
             if (num >= CMD_ja){                     \
-                to_f("\tcmp ");                        \
+                to_f("\tcmp ");                      \
             }                                         \
             else                                       \
-                fprintf(prog, "\t%s ", #name);            \
+                fprintf(prog, "\t%s ", #name);          \
             break;                                       \
         }
 #include "supercmd.h"
@@ -68,15 +77,25 @@ int To_Asm_Op(elem * element){
             break;
         }
     }
-    if (*((int*)(&(element->value))) == CMD_jmp) {
-        fprintf(prog, "\n");
+    if (value == CMD_jmp) {
+        f_asm(fprintf(prog, "\n");)
         return 0;
     }
 
-    To_Intel_Asm(element->left);
-    to_f(", ");
-    To_Intel_Asm(element->right);
-    to_f("\n");
+    if (value == CMD_mul || value == CMD_div) {
+        f_asm(to_f("rdx\n\tpush rax\n");)
+        f_bin()
+    }
+    else {
+        f_asm(to_f("rax, rdx\n");)
+        f_bin()
+        if (value < CMD_ja) {
+            f_asm(to_f("\tpush rax\n");)
+            f_bin(fprintf(prog, "%x", 50);)
+        }
+
+    }
+
 
     element->value = element->left->value;
     element->data_type = element->left->data_type;
@@ -91,37 +110,44 @@ int To_Asm_Op(elem * element){
 int To_Asm_Out(elem * element){
 
     if (element->right->data_type == TYPE_VAR) {
-        to_f("\tmov rdi, msgvardec\n");
-        to_f("\tmov rsi, ");
+        f_asm(to_f("\tmov rdi, msgvardec\n");)
+        f_bin()
+
         To_Asm_Var(element->right);
-        to_f("\n\tcall printff\n");
+
+        f_asm(to_f("\tpop rsi\n");)
+        f_bin()
+        f_asm(to_f("\tcall printff\n");)
+        f_bin(fprintf(prog, "%lx", 0xe83ffdffff);)
     }
     else {
-        fprintf(prog, "\tmov rdi, msgstring\n");
-        fprintf(prog, "\tmov rsi, %s\n", (char *) element->right->value);
-        to_f("\tcall printff\n");
+        f_asm(fprintf(prog, "\tmov rdi, msgstring\n");)
+        f_bin(fprintf(prog, "%lx%.10lx", 0x48bf690460, 0x0000000000);)
+
+        f_asm(fprintf(prog, "\tmov rsi, %s\n", (char *) element->right->value);)
+        f_bin(fprintf(prog, "%x%lx", 0x48be07 + *(((char *) element->right->value) + 3), 0x04600000000000);)
+        f_asm(to_f("\tcall printff\n");)
+        f_bin()
     }
 
 }
 
 int To_Asm_Var(elem * element){
-    fprintf(prog, "[rsp-8*%i]", *(int *)(&(element->value)));
+    fprintf(prog, "\tmov r9, [rsp-8*%i]\n\tpush r9\n", *(int *)(&(element->value)));
     return 0;
 }
 
 int To_Asm_Number(elem * element){
-    fprintf(prog, "%lgd", *(double *) element->value);
+    fprintf(prog, "\tmov r9, %lgd\n\tpush r9\n", *(double *) element->value);//
 }
 
 int To_Asm_Ret(elem * element){
     if (element->right->data_type == TYPE_NUMBER || element->right->data_type == TYPE_VAR) {
-        to_f("\tmov rax, ");
         To_Intel_Asm(element->right);
+        to_f("\tpop rax\n");
     }
     else {
         To_Intel_Asm(element->right);
-        to_f("\tmov rax, ");//This can be removed
-        To_Intel_Asm(element->right);//be removed
     }
 
     to_f("\n");
@@ -154,6 +180,9 @@ int To_Asm_If(elem * element) {
     if (element->left->data_type == TYPE_ELS){
         To_Intel_Asm(element->left->right);
         fprintf(prog, ".lble%i:\n", label);
+        if (element->left->left == NULL)
+            to_f("\tret\n");
+
     }
     return 0;
 }
@@ -162,17 +191,39 @@ int To_Asm_Els(elem * element){
     return 0;
 }
 
+int To_Asm_Ass(elem * element){
+    To_Intel_Asm(element->right);
+    fprintf(prog, "\tpop r9\n\tmov [rsp-8*%i], r9\n", element->value);
+}
+
+int To_Asm_In(elem * element){
+    f_asm(
+            fprintf(prog,
+            "\txor rax, rax\n"
+            "\tmov rsi, bbuf\n"
+            "\txor rdi, rdi\n"
+            "\tmov rdx, 10\n"
+            "\tsyscall\n"
+            "\tcall string_to_dec\n"
+            "\tmov [rsp-8*%i], rax\n", element->right->value);
+    )
+    f_bin(
+            fprintf(prog, "%x%lx%.10lx%x%x%x%x", 0x4831c0, 0x48beac0460, 0x0000000000, 0x4831ff, 0xba0a000000, 0x0f05, 0xe8a0ffffff );
+    )
+
+
+}
+
 int To_Asm_Func(elem * element){
-    if (element->left->data_type == TYPE_OP)
-        To_Asm_Op(element->left);
-
-    to_f("\n\tmov rax, ");
+    //if (element->left->data_type == TYPE_OP)
     To_Intel_Asm(element->left);
-    to_f("\n");
 
-    fprintf(prog, "\n\tcall %s\n\tmov ", (char *) element->value);
-    To_Intel_Asm(element->left);
-    to_f(", rax\n");
+
+    //To_Intel_Asm(element->left);
+    to_f("\tpop rax\n");
+
+    fprintf(prog, "\tcall %s\n", (char *) element->value);
+    to_f("\tpush rax\n");
     element->data_type = TYPE_REG;
     element->value = 0;
     Mini_Delete(element->left);
@@ -180,8 +231,13 @@ int To_Asm_Func(elem * element){
     return 0;
 }
 
-int To_Asm_Reg(elem * element){
-    to_f("rax");
+int To_Asm_New_Func(elem * element){
+    cur_func = 1; fprintf(prog, "%s:\n\tpush rbp \n"
+            "\tmov rbp, rsp\n"
+            "\tsub rsp, 80\n"
+            "\tmov [rsp-8*%i], rax\n",
+                          (char *) element->value,
+                          *(int*)(&(element->right->value)));
 }
 
 void Super_Switch(elem * element){
