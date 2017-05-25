@@ -78,6 +78,7 @@ void Header_Dump(list_header * header){
 
 void List_Dump(list_header * header){
     assert(header);
+    super_list_dump = fopen("list_dump.gv", "w");
     fprintf(super_list_dump, "digraph G{\n");
     list_elem * element = header->first;
     while(1){

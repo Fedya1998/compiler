@@ -1,0 +1,3 @@
+/home/fedya/code/ded/compiler/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/fedya/code/ded/compiler/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/fedya/code/ded/compiler/cmake-build-debug/CMakeFiles/compiler.dir

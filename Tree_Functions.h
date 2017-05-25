@@ -136,6 +136,7 @@ void Elem_And_Next_Dump(const elem * element){
 }
 
 void Tree_Dump(const tree_header *header) {
+    super_tree_dump = fopen("tree_dump.gv", "w");
     fprintf(super_tree_dump, "digraph G{\n");
     if (!header) return;
     if (!header->first) return;
@@ -143,7 +144,7 @@ void Tree_Dump(const tree_header *header) {
     fprintf(super_tree_dump, "}");
     fclose(super_tree_dump);
     system("cd ~/code/ded/compiler");
-    system("dot -Tpng dump.gv -o dump.png");
+    system("dot -Tpng tree_dump.gv -o dump.png");
 }
 
 
@@ -697,17 +698,17 @@ elem *Che_Delat_Esli_out(elem * element){
         *word_end = '\0';
         assert(word_end);
         //printf("string %s\n", kavich);
-        char * str = (char *) calloc(word_end - kavich, sizeof(char));
-        strcpy(str, (char *) kavich + 1);
-        str[word_end - kavich - 1] = '\0';
+        Buf <char> * str = new Buf <char> (word_end - kavich);
+        str->m_data = (char *) calloc(sizeof(char), word_end - kavich);
+        strcpy(str->m_data, kavich + 1);
         //printf("My string %s\n", str);
         s = word_end + 2;
         Add_Right(element);
         element->right->data_type = TYPE_STRING;
-        char * string = new char[7];
+        char * string = (char *) calloc(sizeof(*string), 5);
         strcpy(string, "msg");
         sprintf(string+3, "%i", current_message++);
-        string[6] = '\0';
+        string[4] = '\0';
 
         super_list.append(str);
 
@@ -805,7 +806,7 @@ elem *Che_Delat_Esli_rbr(elem * element){
 }
 
 int Get_Var_Num(){
-    for (int i = 0; i < current_var; i++){
+    for (int i = 1; i < current_var; i++){
         if (strcmp((char *) s, var_array[i]->id) == 0)
             return i;
     }

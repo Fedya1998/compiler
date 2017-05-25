@@ -12,7 +12,7 @@ if (a<1) {
 	return 1;
 }
 else {
-	return (Factorial(a-1))*a;
+	return a*(Factorial(a-1));
 }
 
 

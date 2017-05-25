@@ -9,7 +9,7 @@
 #include <printFe.h>
 
 
-#define NDEBUG
+#define NDEBUG 1
 #include <assert.h>
 #include <my_debug.h>
 
@@ -29,8 +29,8 @@
 //Cond ::= if (E) Code;
 //Code ::= (Cond|Ass|New|in-out)*
 
-FILE * super_tree_dump = fopen("dump.gv", "w");
-FILE * super_list_dump = fopen("list_dump.gv", "w");
+FILE * super_tree_dump = NULL;
+FILE * super_list_dump = NULL;
 
 typedef struct elem;
 typedef struct tree_header;
@@ -58,7 +58,7 @@ struct elem{
 };
 
 enum operators{
-#define DEF_CMD(name, num) CMD_##name = num,
+#define DEF_CMD(name, num, code) CMD_##name = num,
 
 #include "supercmd.h"
     _CMD_EMPTY
@@ -160,7 +160,7 @@ void Parse_Error();
 
 int cur_label = 0;
 variable * var_array[20];
-int current_var = 0;
+int current_var = 1;
 tree_header * func_array[20];
 int cur_func = 0;
 
@@ -192,7 +192,6 @@ int To_Asm_Els(elem * element);
 int To_Asm_New_Func(elem * element);
 int To_Asm_Ass(elem * element);
 void Super_Switch(elem * element);
-
 int current_message = 0;
 
 int To_Intel_Asm(elem * element);
@@ -203,62 +202,62 @@ int Destruction = 0;
 
 FILE * prog = NULL;
 
-enum super_mode{
+enum translation_modes{
     ASM_MODE,
     BIN_MODE
 };
 
-const int SUPER_TRANSLATE_MODE = ASM_MODE;//1 - .asm, 2 - bin file
+const int SUPER_TRANSLATION_MODE = BIN_MODE;
 
-#define f_asm(code) if (SUPER_TRANSLATE_MODE == ASM_MODE) {code}
-#define f_bin(code) if (SUPER_TRANSLATE_MODE == BIN_MODE) {code}
-
+#define f_asm(code) if (SUPER_TRANSLATION_MODE == ASM_MODE) {code}
+#define f_bin(code) if (SUPER_TRANSLATION_MODE == BIN_MODE) {code}
+#define f_ch(num) fprintf(prog, "%c", num)
 #define to_f(data) fprintf(prog, data)
 
-List <char> super_list = List<char>();
+//  ╓---------------------------------------╖
+//  |These must be taken from a.out.superlib|
+        #define PRINTFF 0xf5
+        #define IN_ASM 0xb0
+        const short MSGSTRING = 2879;
+        const short MSGDEC = 2876;
+        short current_data = 2700;
+        const int START_POINT = 900;
+        const int END_POINT = 2850;
+        const int END_LIB = 4700;
+//  |                                       |
+//  ╙---------------------------------------╜
+
+List <Buf<char>> super_list;
+List <Label> label_list;
+
+using namespace std;
 
 int main(){
-
-    char source_name[] = "test.txt";
-
-    char * program = (char *)File_To_Buf_u(fopen(source_name, "r"));
+    super_list.Compare = Compare_Char_Buf;
+    label_list.Compare = Compare_Label;
+    char * program = (char *) File_To_Buf_u(fopen("factorial.txt", "r"));
 
     To_The_Only_One_Line(program);
 
     list_header * l_header = To_List(program);//List of tokens
-
-    D_MNOGO_DEFIS;
-
-
-    List_Dump(l_header);
-
-
-
+    //List_Dump(l_header);
     tree_header * header = To_Tree(l_header);
-
     Tree_Optimize(header->first);
-
-
-    D_MNOGO_DEFIS;
-
-    Tree_Dump(header);
-
-
-
+    //Tree_Dump(header);
 
     cur_func = 0;
-    source_name[0] = '_';
-    source_name[1] = '_';
-
-
+    FILE * lib = NULL;
     f_asm(prog = fopen("proga.asm", "w");)
     else {
-        prog = fopen("a.out.lib", "ab");
-        fseek(prog, 900 , SEEK_SET);
+        lib = fopen("a.out.superlib", "r");
+        prog = fopen("a.out", "w");
+        assert(prog);
+        char a[START_POINT] = {};
+        fread(a, sizeof(char), START_POINT, lib);
+        fwrite(a, sizeof(char), START_POINT, prog);
+        fseek(lib, END_POINT, SEEK_SET);
     }
 
-    List <Label> label_list = List <Label> ();
-    label_list.Compare = Compare_Label;
     f_asm(
         to_f("DEFAULT REL\n"
              "%%include \"printff.asm\"\n"
@@ -274,8 +273,27 @@ int main(){
         fputs("msgstring db \'%s\', 0\n", prog);
     )
     else {
-        
+        elem * element = Copy_Elem(header->first);
+        f_ch(0x55);
+        f_ch(0x48);
+        f_ch(0x89);
+        f_ch(0xe5);
+
+        f_ch(0x48);
+        f_ch(0x83);
+        f_ch(0xec);
+        f_ch(0x50);
         To_Intel_Asm(header->first);
+        f_ch(0x48);
+        f_ch(0x89);
+        f_ch(0xec);
+        f_ch(0x5d);
+        char a[END_LIB - END_POINT];
+        fread(a, sizeof(char), END_LIB - END_POINT, lib);
+        fseek(prog, END_POINT, SEEK_SET);
+        fwrite(a, sizeof(char), END_LIB - END_POINT, prog);
+        fseek(prog, START_POINT, SEEK_SET);
+        label_list.label_dump(prog);
     }
 
     fclose(prog);
@@ -287,13 +305,54 @@ int main(){
         system("./a.out");
     )
     else{
-        system("./a.out.lib");
+
     }
 
-
-
+    Destruction = 1;
 
     return 0;
+}
+
+int main3(){
+    List <Label> test_list;
+    Label lbl0;
+    Label lbl2;
+    Label lbl3;
+    char str[] = "Hui";
+    char str2[] = "Hui2";
+    lbl0.name = str;
+    lbl2.name = str2;
+    lbl3.name = str2;
+    test_list.append(&lbl0);
+    test_list.Compare = Compare_Label;
+    test_list.append(&lbl2);
+    test_list.find(&lbl3)->dump();
+    printf("%s", test_list.find(&lbl3)->m_data->name);
+
+}
+
+int main2(){
+    /*int num1 = 10;
+    int num2 = -10;
+    printf("num %i %i %i %i\n", (unsigned char) num1, *((unsigned char *) &num1 + 1), *((unsigned char *)&num1 + 2),  *((unsigned char *)&num1 + 3));
+    printf("num %i %i %i %i\n", (unsigned char) num2, *((unsigned char *) &num2 + 1), *((unsigned char *) &num2 + 2), *((unsigned char *)&num2 + 3));
+    getchar();*/
+    FILE * prog = fopen("super_file.asm", "wb");
+    to_f("DEFAULT REL\n"
+                 "%%include \"printff.asm\"\n"
+                 "%%include \"in.asm\"\n"
+                 "section .text\n\t"
+                 "global _start\n"
+                 "_start:\n");
+
+    for (int i = 1; i < 2000; i++)
+        to_f("\tnop\n");
+
+    to_f("section .data\n");
+    super_list.dump();
+    //super_list.file_dump(prog);
+    fputs("msgvardec db \'%d\', 0\n", prog);
+    fputs("msgstring db \'%s\', 0\n", prog);
 }
 
 #include "Tree_Functions.h"
@@ -306,3 +365,4 @@ int main(){
 #undef f_asm
 #undef f_bin
 #undef to_f
+#undef PRINTFF

@@ -63,7 +63,7 @@ elem * GetFunc(elem * element) {
     //Gde;
     //p(11, ("Got %s\n", s));
     if (GetVar(element)) return element;
-    char *func_end = (char *) strchr((char *) s, '(');
+    char *func_end = strchr(s, '(');
     *func_end = '\0';
     assert(func_end - s + 1 > 0);
     char *super_func = (char *) calloc(func_end - s + 1, sizeof(char));
@@ -94,7 +94,7 @@ elem * GetVar(elem * element){
     char wut_end = *end;
     *end = '\0';
 
-    for (int i = 0; i < current_var; i++) {
+    for (int i = 1; i < current_var; i++) {
         if (strcmp((char *) s, (char *) var_array[i]->id) == 0) {
             //p(10, ("Nashel var from array\n"));
             *end = wut_end;

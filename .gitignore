@@ -34,5 +34,9 @@
 
 *.swp
 
+
+*.hidden
+
 */bin/*
 */cmake-build-debug/*
+*/.idea/*
