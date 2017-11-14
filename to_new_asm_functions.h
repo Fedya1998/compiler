@@ -39,6 +39,7 @@ int To_Intel_Asm(elem * element){
 }
 
 int To_Asm_Op(elem * element){
+    //All arithmetic operations are calculated using rdx and rax
     assert(element);
     To_Intel_Asm(element->left);
     To_Intel_Asm(element->right);
@@ -90,14 +91,13 @@ int To_Asm_Op(elem * element){
 
     }
 
-
     element->value = element->left->value;
     element->data_type = element->left->data_type;
+    //Join two nodes into one with calculated value
     Mini_Delete(element->left);
     Mini_Delete(element->right);
     element->left = NULL;
     element->right = NULL;
-
     return 0;
 }
 
@@ -125,11 +125,10 @@ int To_Asm_Out(elem * element){
         )
         f_asm(fprintf(prog, "\tmov rsi, %s\n", (char *) element->right->value);)
         f_bin(
-
             long ptr_now = ftell(prog);
             fseek(prog, current_data, SEEK_SET);
             unsigned index = (unsigned int)(((char *) element->right->value)[3] - '0');
-            fprintf(prog, "%s%c", super_list.search_by_index(index)->m_data->m_data, 0x00);
+            fprintf(prog, "%s%c", super_list.search_by_index(index).m_data->m_data, 0x00);
             short data_now = current_data;
             current_data = (short) ftell(prog);
             fseek(prog, ptr_now, SEEK_SET);
@@ -137,7 +136,6 @@ int To_Asm_Out(elem * element){
             f_ch(0xbe);
             fprintf(prog, "%c%c%c", *((char *)&data_now), *((char *)&data_now + 1), 0x60);
             f_ch(0x00); f_ch(0x00); f_ch(0x00); f_ch(0x00); f_ch(0x00);
-
         )
         f_asm(to_f("\tcall printff\n");)
         f_bin(
@@ -235,6 +233,7 @@ int To_Asm_If(elem * element) {
         }
         default:{
             printf("Da takogo ne mozhet bit\n");
+            getchar();
             break;
         }
 
@@ -393,8 +392,14 @@ int To_Asm_New_Func(elem * element){
         char * super_name = (char *) calloc((sizeof(char)), strlen((char *) element->value));
         strcpy(super_name, (char *) element->value);
         lbl.name = super_name;
-        if (label_list.find(&lbl))
-            label_list.find(&lbl)->m_data->number = ftell(prog);
+        if (label_list.find(&lbl)){
+            long ftell = ftell(prog);
+            if (ftell == -1){
+                perror("ftell");
+                exit(EXIT_FAILURE);
+            }
+            label_list.find(&lbl)->m_data->number = (size_t) ftell(prog);
+        }
         f_ch(0x55);
         f_ch(0x48);
         f_ch(0x89);
@@ -448,21 +453,3 @@ void Super_Switch(elem * element){
         }
     }
 }
-/*
-int Razverni_Hex(int num){
-    int * number = new int(num);
-    if (*number < 0)
-        *number = 1<<32 - *number;
-    printf("num %i %i %i %i\n", (unsigned char) *number, (unsigned char) *(number + 1), (unsigned char) *(number + 2), (unsigned char) *(number + 3));
-    char now = *(char *) number;
-    printf("now %i\n", now);
-    *(char *) number = *(char *) (number + 3);
-    *(char *) (number + 3) = now;
-    now = *(char *) (number + 1);
-    printf("now %i\n", now);
-    *(char *) number = *(char *) (number + 2);
-    *(char *) (number + 2) = now;
-    int res = *number;
-    delete number;
-    return res;
-}*/

@@ -15,13 +15,10 @@ set(SOURCE_FILES
         list_functions.h
         main.cpp
         Makefile
-        noproc_factorial.txt
-        noproc_kvadr.txt
         printff.asm
         proga.asm
         README.md
         supercmd.h
-        test.txt
         to_asm_functions.h
         to_new_asm_functions.h
         Tree_Functions.h
