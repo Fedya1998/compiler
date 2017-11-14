@@ -1,2 +1,0 @@
-Options: 
-CMake: 3.10.0-rc3@/usr/local/bin/cmake
